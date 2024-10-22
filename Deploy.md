@@ -32,6 +32,7 @@ Cette documentation explique comment déployer votre application en utilisant Do
    - `deploy.yml`
    - `install-plugins.sh`
    - `prometheus.yml`
+   - `.github/workflows/deploy.yml`
 
 *Remarque : Ne précisez pas le code dans cette documentation.*
 
