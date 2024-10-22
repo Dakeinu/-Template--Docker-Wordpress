@@ -1,0 +1,84 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Copy repository to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "~/repo"
+      
+      - name: Check and install Docker and Docker Compose if needed
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            if ! docker-compose --version > /dev/null 2>&1; then
+              echo "docker-compose not found, installing Docker and Docker Compose..."
+              sudo apt update -y
+              sudo apt upgrade -y
+              sudo apt install docker.io -y
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            else
+              echo "docker-compose is already installed."
+            fi
+
+      - name: Create .env file on the server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/repo
+            echo "Creating .env file..."
+            cat > .env <<EOF
+            WORDPRESS_DOMAIN=${{ secrets.WORDPRESS_DOMAIN }}
+            WORDPRESS_DB_USER=${{ secrets.WORDPRESS_DB_USER }}
+            WORDPRESS_DB_PASSWORD=${{ secrets.WORDPRESS_DB_PASSWORD }}
+            WORDPRESS_DB_NAME=${{ secrets.WORDPRESS_DB_NAME }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            FTP_PASS=${{ secrets.FTP_PASS }}
+            FTP_USER=${{ secrets.FTP_USER }}
+            GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
+            EOF
+
+      - name: Set executable permission for install-plugins.sh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/repo
+            chmod +x install-plugins.sh
+
+      - name: Execute commands over SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/repo
+            sudo docker-compose down
+            sudo docker-compose up -d --build
+            sudo docker-compose down
+            sudo docker-compose up -d
