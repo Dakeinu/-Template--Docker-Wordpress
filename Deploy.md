@@ -41,15 +41,18 @@ Cette documentation explique comment déployer votre application en utilisant Do
 2. Ajoutez les secrets nécessaires dans le fichier `deploy.yml` avec les variables d'environnement suivantes :
 
    ```bash
-   WORDPRESS_DOMAIN=example.com
-   WORDPRESS_DB_USER=db_user
-   WORDPRESS_DB_PASSWORD=db_password
-   WORDPRESS_DB_NAME=wordpress_db
-   MYSQL_PASSWORD=mysql_password
-   MYSQL_ROOT_PASSWORD=root_password
-   FTP_USER=ftp_user
-   FTP_PASS=ftp_password
-   GRAFANA_PASSWORD=graphana_password
+   SSH_HOST=
+   SSH_USER=
+   SSH_PRIVATE_KEY=
+   WORDPRESS_DOMAIN=
+   WORDPRESS_DB_USER=
+   WORDPRESS_DB_PASSWORD=
+   WORDPRESS_DB_NAME=
+   MYSQL_PASSWORD=
+   MYSQL_ROOT_PASSWORD=
+   FTP_PASS=
+   FTP_USER=
+   GRAFANA_PASSWORD=
    ```
 
 ## Étape 5 : Lancer le Workflow
