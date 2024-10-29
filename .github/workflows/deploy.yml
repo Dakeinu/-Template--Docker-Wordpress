@@ -58,9 +58,36 @@ jobs:
             FTP_PASS=${{ secrets.FTP_PASS }}
             FTP_USER=${{ secrets.FTP_USER }}
             GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
+            WORDPRESS_ADMIN_USER=${{ secrets.WORDPRESS_ADMIN_USER }}
+            WORDPRESS_ADMIN_PASSWORD=${{ secrets.WORDPRESS_ADMIN_PASSWORD }}
+            WORDPRESS_ADMIN_EMAIL=${{ secrets.WORDPRESS_ADMIN_EMAIL }}
             EOF
 
+      - name: Generate htpasswd for Traefik dashboard
+        id: generate_htpasswd
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/repo
+            echo "Checking if htpasswd is installed..."
+            if ! command -v htpasswd &> /dev/null; then
+              echo "htpasswd not found. Installing..."
+              sudo apt-get install -y apache2-utils
+            else
+              echo "htpasswd is already installed."
+            fi
+            
+            echo "Generating htpasswd..."
+            USERNAME=${{ secrets.TRAEFIK_USERNAME }}
+            PASSWORD=${{ secrets.TRAEFIK_PASSWORD }}
+            HTPASSWD=$(htpasswd -nbB $USERNAME $PASSWORD)
+            echo HTPASSWD=$HTPASSWD >> .env
+
       - name: Execute commands over SSH
+        if: steps.generate_htpasswd.outcome == 'success'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
